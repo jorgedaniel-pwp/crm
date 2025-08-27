@@ -1,6 +1,26 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Plus } from 'lucide-react';
 import {
   KanbanProvider,
   KanbanBoard,
@@ -30,9 +50,9 @@ type Column = {
 };
 
 const columns: Column[] = [
-  { id: 'cold', name: 'Planned', ratingValue: 100000000, color: '#6B7280' },
-  { id: 'warm', name: 'In Progress', ratingValue: 100000001, color: '#F59E0B' },
-  { id: 'hot', name: 'Done', ratingValue: 100000002, color: '#10B981' },
+  { id: 'cold', name: 'Cold', ratingValue: 100000000, color: '#3B82F6' },
+  { id: 'warm', name: 'Warm', ratingValue: 100000001, color: '#F59E0B' },
+  { id: 'hot', name: 'Hot', ratingValue: 100000002, color: '#EF4444' },
 ];
 
 const shortDateFormatter = new Intl.DateTimeFormat('en-US', {
@@ -50,6 +70,12 @@ export default function LeadsPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    ycn_name: '',
+    ycn_rating: '100000000',
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     fetchLeads();
@@ -60,10 +86,11 @@ export default function LeadsPage() {
       setLoading(true);
       const response = await fetch('/api/leads');
       if (!response.ok) {
-        throw new Error('Failed to fetch leads');
+        throw new Error('Failed to fetch leads from Dataverse');
       }
       const data = await response.json();
       
+      // Transform Dataverse data to component format
       const transformedLeads: Lead[] = data.map((lead: any) => ({
         id: lead.ycn_leadid,
         name: lead.ycn_name,
@@ -77,7 +104,7 @@ export default function LeadsPage() {
       
       setLeads(transformedLeads);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      setError(err instanceof Error ? err.message : 'An error occurred fetching from Dataverse');
     } finally {
       setLoading(false);
     }
@@ -133,12 +160,15 @@ export default function LeadsPage() {
 
         const updatedLeads = leads.map(lead => 
           lead.id === activeItem.id 
-            ? { ...lead, column: targetColumnId, rating: newRating }
+            ? { ...lead, column: targetColumnId, rating: newRating, modifiedOn: new Date().toISOString() }
             : lead
         );
         setLeads(updatedLeads);
+        
+        // Dataverse update completed
       } catch (err) {
-        console.error('Error updating lead:', err);
+        console.error('Error updating lead in Dataverse:', err);
+        // Refresh from Dataverse on error
         fetchLeads();
       }
     }
@@ -146,6 +176,58 @@ export default function LeadsPage() {
 
   const handleDataChange = (newData: Lead[]) => {
     setLeads(newData);
+  };
+
+  const handleSubmit = async () => {
+    if (!formData.ycn_name.trim()) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const response = await fetch('/api/leads', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ycn_name: formData.ycn_name,
+          ycn_rating: parseInt(formData.ycn_rating),
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create lead');
+      }
+
+      const newLead = await response.json();
+      
+      // Add the new lead to the list
+      const transformedLead: Lead = {
+        id: newLead.ycn_leadid,
+        name: newLead.ycn_name,
+        column: getColumnFromRating(newLead.ycn_rating),
+        leadId: newLead.ycn_leadid,
+        rating: newLead.ycn_rating,
+        createdOn: newLead.createdon,
+        modifiedOn: newLead.modifiedon,
+      };
+      
+      // Update local state with new lead
+      setLeads([...leads, transformedLead]);
+      
+      // Close dialog and reset form
+      setDialogOpen(false);
+      setFormData({ ycn_name: '', ycn_rating: '100000000' });
+      
+      // Refresh from Dataverse to ensure consistency
+      setTimeout(fetchLeads, 500);
+    } catch (err) {
+      console.error('Error creating lead in Dataverse:', err);
+      alert('Failed to create lead in Dataverse. Please check the console for details.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (loading) {
@@ -167,11 +249,70 @@ export default function LeadsPage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="p-6">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Leads Pipeline</h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-2">
-            Manage your leads by dragging them between stages
-          </p>
+        <div className="mb-8 flex justify-between items-start">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Leads Pipeline</h1>
+            <p className="text-gray-600 dark:text-gray-400 mt-2">
+              Manage your leads by dragging them between Cold, Warm, and Hot stages
+            </p>
+          </div>
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="flex items-center gap-2">
+                <Plus className="h-4 w-4" />
+                New Lead
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Add New Lead</DialogTitle>
+                <DialogDescription>
+                  Enter the details for your new lead.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="name" className="text-right">
+                    Name
+                  </Label>
+                  <Input
+                    id="name"
+                    value={formData.ycn_name}
+                    onChange={(e) => setFormData({ ...formData, ycn_name: e.target.value })}
+                    className="col-span-3"
+                    placeholder="Enter lead name"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="rating" className="text-right">
+                    Rating
+                  </Label>
+                  <Select
+                    value={formData.ycn_rating}
+                    onValueChange={(value) => setFormData({ ...formData, ycn_rating: value })}
+                  >
+                    <SelectTrigger className="col-span-3">
+                      <SelectValue placeholder="Select rating" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="100000000">Cold</SelectItem>
+                      <SelectItem value="100000001">Warm</SelectItem>
+                      <SelectItem value="100000002">Hot</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button
+                  type="submit"
+                  onClick={handleSubmit}
+                  disabled={!formData.ycn_name.trim() || isSubmitting}
+                >
+                  {isSubmitting ? 'Creating in Dataverse...' : 'Create Lead'}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
 
         <div className="h-[calc(100vh-180px)]">

@@ -29,9 +29,9 @@ import {
 } from 'react';
 import { createPortal } from 'react-dom';
 import tunnel from 'tunnel-rat';
-import { Card } from 'components/components/ui/card';
-import { ScrollArea, ScrollBar } from 'components/components/ui/scroll-area';
-import { cn } from 'components/lib/utils';
+import { Card } from '@/components/ui/card';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { cn } from '@/lib/utils';
 
 const t = tunnel();
 

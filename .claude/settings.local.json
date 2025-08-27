@@ -6,9 +6,13 @@
       "mcp__AI-CRM__describe_table",
       "mcp__AI-CRM__list_tables",
       "Bash(mkdir:*)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "WebFetch(domain:vercel.com)",
+      "WebSearch",
+      "Bash(git add:*)"
     ]
   },
+  "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
     "AI-CRM"
   ]

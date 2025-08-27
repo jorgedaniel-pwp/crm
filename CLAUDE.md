@@ -1,6 +1,6 @@
 # 🔄 Version Control & Deployment Instructions
 
-**Current Version: v0.01**
+**Current Version: v0.02**
 
 **IMPORTANT: Before pushing to GitHub, you MUST:**
 1. Increment the version number in this file until such time as we have a visible version in our app
@@ -93,3 +93,30 @@ When the user types "WRAPUP", perform the following:
 - ALWAYS prefer editing existing files
 - NEVER proactively create documentation files unless requested
 - Only use emojis if the user explicitly requests it
+
+## 📊 Dataverse Integration Architecture Decision (v0.02)
+
+**Decision Date:** 2025-08-27
+**Decision:** Option 3 - Direct Database Integration
+
+### Architecture Approach
+After researching MCP server integration patterns with Next.js, we've decided to:
+1. **Skip MCP for production** - Connect directly to Dataverse APIs from Next.js
+2. **Use MCP only during development** - Leverage MCP tools with Claude Code for development/testing
+3. **Implement Dataverse SDK or REST API** - Use official Dataverse Web API directly in server actions/API routes
+
+### Rationale
+- MCP tools are designed for AI assistants, not direct web application integration
+- No standard library exists for MCP-Next.js integration
+- Security concerns with exposing MCP servers to web applications
+- Direct Dataverse API integration provides better performance and security
+
+### Implementation Status
+- Current code has placeholder implementations ready for Dataverse API integration
+- MCP server configuration remains for development use with Claude Code
+- API routes and server actions structured to support direct Dataverse calls
+
+### Next Steps
+- Implement Dataverse Web API authentication
+- Replace placeholder code with actual Dataverse API calls
+- Maintain MCP configuration for Claude Code development workflow
