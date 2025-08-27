@@ -1,0 +1,23 @@
+{
+     "mcpServers": {
+    "AI-CRM": {
+      "command": "Microsoft.PowerPlatform.Dataverse.MCP",
+      "args": [
+        "--ConnectionUrl",
+        "https://make.powerautomate.com/environments/4e136086-e5a5-ed6f-84c9-668d336aa240/connections?apiName=shared_commondataserviceforapps&connectionName=a0aed7bdc3004101afa0e4c446f15966",
+        "--MCPServerName",
+        "DataverseMCPServer",
+        "--TenantId",
+        "9084900f-cec1-47f3-a0a0-8a889f7f2cbb",
+        "--EnableHttpLogging",
+        "true",
+        "--EnableMsalLogging",
+        "false",
+        "--Debug",
+        "false",
+        "--BackendProtocol",
+        "HTTP"
+         ]
+       }
+     }
+   }

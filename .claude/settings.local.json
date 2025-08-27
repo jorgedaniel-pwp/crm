@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx shadcn@latest init:*)",
+      "Bash(npx:*)",
+      "mcp__AI-CRM__describe_table",
+      "mcp__AI-CRM__list_tables",
+      "Bash(mkdir:*)",
+      "Bash(npm run build:*)"
+    ]
+  },
+  "enabledMcpjsonServers": [
+    "AI-CRM"
+  ]
+}
