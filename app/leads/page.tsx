@@ -1,5 +1,8 @@
 'use client';
 
+import { useAuth } from '@/lib/auth/auth-context';
+import { AuthGuard } from '@/components/auth/auth-guard';
+
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -67,6 +70,7 @@ const dateFormatter = new Intl.DateTimeFormat('en-US', {
 });
 
 export default function LeadsPage() {
+  const { getAccessToken, isAuthenticated } = useAuth();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -78,17 +82,48 @@ export default function LeadsPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    fetchLeads();
-  }, []);
+    // Only fetch leads if user is authenticated
+    if (isAuthenticated) {
+      fetchLeads();
+    } else {
+      setLoading(false);
+    }
+  }, [isAuthenticated]);
 
   const fetchLeads = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/leads');
+      setError(null);
+      
+      console.log('Fetching leads...');
+      
+      // Get access token for the user
+      const token = await getAccessToken();
+      console.log('Access token obtained:', token ? 'Yes' : 'No');
+      
+      if (!token) {
+        throw new Error('Unable to get access token. Please sign in again.');
+      }
+      
+      console.log('Calling /api/leads...');
+      const response = await fetch('/api/leads', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      console.log('API response status:', response.status);
+      
       if (!response.ok) {
-        throw new Error('Failed to fetch leads from Dataverse');
+        const errorData = await response.json().catch(() => ({}));
+        console.error('API error:', errorData);
+        if (response.status === 401) {
+          throw new Error('Authentication failed. Please sign in again.');
+        }
+        throw new Error(errorData.error || 'Failed to fetch leads from Dataverse');
       }
       const data = await response.json();
+      console.log('Leads fetched:', data);
       
       // Transform Dataverse data to component format
       const transformedLeads: Lead[] = data.map((lead: any) => ({
@@ -146,10 +181,16 @@ export default function LeadsPage() {
       const newRating = getRatingFromColumn(targetColumnId);
       
       try {
+        const token = await getAccessToken();
+        if (!token) {
+          throw new Error('Unable to get access token');
+        }
+        
         const response = await fetch(`/api/leads/${activeItem.id}`, {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
           },
           body: JSON.stringify({ rating: newRating }),
         });
@@ -185,10 +226,16 @@ export default function LeadsPage() {
 
     setIsSubmitting(true);
     try {
+      const token = await getAccessToken();
+      if (!token) {
+        throw new Error('Unable to get access token');
+      }
+      
       const response = await fetch('/api/leads', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           ycn_name: formData.ycn_name,
@@ -247,7 +294,8 @@ export default function LeadsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <AuthGuard>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="p-6">
         <div className="mb-8 flex justify-between items-start">
           <div>
@@ -375,5 +423,6 @@ export default function LeadsPage() {
         </div>
       </div>
     </div>
+    </AuthGuard>
   );
 }

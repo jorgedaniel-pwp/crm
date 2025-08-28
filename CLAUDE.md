@@ -1,6 +1,6 @@
 # 🔄 Version Control & Deployment Instructions
 
-**Current Version: v0.02**
+**Current Version: v0.03**
 
 **IMPORTANT: Before pushing to GitHub, you MUST:**
 1. Increment the version number in this file until such time as we have a visible version in our app
@@ -120,3 +120,11 @@ After researching MCP server integration patterns with Next.js, we've decided to
 - Implement Dataverse Web API authentication
 - Replace placeholder code with actual Dataverse API calls
 - Maintain MCP configuration for Claude Code development workflow
+
+### Dataverse API Implementation Reference
+**IMPORTANT:** When implementing Dataverse API functionality, always consult the `dataverse.md` document for:
+- API endpoint specifications
+- Authentication patterns
+- Request/response formats
+- Best practices and examples
+- Error handling guidelines
