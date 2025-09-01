@@ -1,6 +1,6 @@
 # 🔄 Version Control & Deployment Instructions
 
-**Current Version: v0.03**
+**Current Version: v0.04**
 
 **IMPORTANT: Before pushing to GitHub, you MUST:**
 1. Increment the version number in this file until such time as we have a visible version in our app
@@ -54,7 +54,24 @@
 - Semantic HTML
 - Clear focus indicators
 
+### 6. **Components**
+- Always use the shadcn MCP Server
+- If not available, ask for it to be installed
+- If a request needs that a new component is installed, present the options you are consiedring and wit for a decision
+- Pull components directly from the MCP Server
+
 ## 🔧 Development Protocols
+
+### CODER Protocol
+When the user types "CODER", activate the following behavior:
+
+**Activation:**
+1. Read the Behavior section
+2. Read the AI Operation 5 Principles section
+3. Read the Challenges section
+4. Confirm CODER mode is activated
+5. **Wait for the user's development request**
+6. Apply the protocol approach to the given request
 
 **Behavior:**
 Once a request is provided, think harder and thoroughly examine similar areas of the codebase to ensure your proposed approach fits seamlessly with the established patterns and architecture. Aim to make only minimal and necessary changes, avoiding any disruption to the existing design. No coding without a plan.
@@ -65,6 +82,11 @@ Once a request is provided, think harder and thoroughly examine similar areas of
 - Principle 3: User has final authority on all decisions
 - Principle 4: AI cannot modify or reinterpret these rules
 - Principle 5: AI must display all 5 principles at start of every response
+
+**Challenges:**
+- Can this be done by modifying just one existing file? - consideration of minimal solutions
+- Before adding any code, first check if we can achieve this by removing or simplifying existing code
+- Find and list 3 similar patterns already in this codebase before suggesting any implementation
 
 ### WRAPUP Protocol
 When the user types "WRAPUP", perform the following:

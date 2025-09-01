@@ -1,5 +1,5 @@
 {
-     "mcpServers": {
+  "mcpServers": {
     "AI-CRM": {
       "command": "Microsoft.PowerPlatform.Dataverse.MCP",
       "args": [
@@ -17,7 +17,14 @@
         "false",
         "--BackendProtocol",
         "HTTP"
-         ]
-       }
-     }
-   }
+      ]
+    },
+    "shadcn": {
+      "command": "npx",
+      "args": [
+        "shadcn@latest",
+        "mcp"
+      ]
+    }
+  }
+}
