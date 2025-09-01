@@ -92,8 +92,12 @@ class DataverseClient {
 
   async updateLead(leadId: string, updates: Partial<Lead>): Promise<void> {
     try {
-      await this.axiosInstance.patch(
-        `/ycn_leads(${leadId})`,
+      console.log('[DataverseClient] Updating lead:', { leadId, updates });
+      const url = `/ycn_leads(${leadId})`;
+      console.log('[DataverseClient] PATCH URL:', `${this.baseUrl}/api/data/v9.2${url}`);
+      
+      const response = await this.axiosInstance.patch(
+        url,
         updates,
         {
           headers: {
@@ -101,8 +105,11 @@ class DataverseClient {
           }
         }
       );
-    } catch (error) {
-      console.error('Error updating lead:', error);
+      
+      console.log('[DataverseClient] Update response status:', response.status);
+    } catch (error: any) {
+      console.error('[DataverseClient] Error updating lead:', error);
+      console.error('[DataverseClient] Error details:', error.response?.data);
       throw error;
     }
   }

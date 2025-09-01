@@ -2,6 +2,7 @@
 
 import { useAuth } from '@/lib/auth/auth-context';
 import { AuthGuard } from '@/components/auth/auth-guard';
+import { useToast } from '@/hooks/use-toast';
 
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -23,15 +24,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Plus } from 'lucide-react';
+import { Plus, Home } from 'lucide-react';
+import Link from 'next/link';
 import {
   KanbanProvider,
   KanbanBoard,
   KanbanHeader,
   KanbanCards,
   KanbanCard,
-  type DragEndEvent,
 } from '@/components/ui/shadcn-io/kanban';
+import type { DragEndEvent, DragStartEvent } from '@dnd-kit/core';
 
 type Lead = {
   id: string;
@@ -71,6 +73,7 @@ const dateFormatter = new Intl.DateTimeFormat('en-US', {
 
 export default function LeadsPage() {
   const { getAccessToken, isAuthenticated } = useAuth();
+  const { toast } = useToast();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -80,6 +83,8 @@ export default function LeadsPage() {
     ycn_rating: '100000000',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStartColumn, setDragStartColumn] = useState<string | null>(null);
 
   useEffect(() => {
     // Only fetch leads if user is authenticated
@@ -163,28 +168,73 @@ export default function LeadsPage() {
     return column ? column.ratingValue : 100000000;
   };
 
+  const handleDragStart = (event: DragStartEvent) => {
+    const activeItem = leads.find((item) => item.id === event.active.id);
+    if (activeItem) {
+      setDragStartColumn(activeItem.column);
+      console.log('Drag started:', {
+        leadId: activeItem.id,
+        leadName: activeItem.name,
+        startColumn: activeItem.column
+      });
+    }
+    setIsDragging(true);
+  };
+
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
+    setIsDragging(false);
+    
+    const originalColumn = dragStartColumn;
+    setDragStartColumn(null);
 
-    if (!over) return;
+    if (!over || !originalColumn) return;
 
     const activeItem = leads.find((item) => item.id === active.id);
     const overColumn = columns.find(col => col.id === over.id);
     
     if (!activeItem) return;
 
+    // Determine target column from either a column drop or a card drop
     const targetColumnId = overColumn ? overColumn.id : 
       leads.find(item => item.id === over.id)?.column || 
-      activeItem.column;
+      originalColumn;
 
-    if (activeItem.column !== targetColumnId) {
+    console.log('Drag end:', {
+      activeItemId: activeItem.id,
+      activeItemName: activeItem.name,
+      fromColumn: originalColumn,  // Use the original column we stored
+      toColumn: targetColumnId,
+      willUpdate: originalColumn !== targetColumnId
+    });
+
+    if (originalColumn !== targetColumnId) {
       const newRating = getRatingFromColumn(targetColumnId);
+      const targetColumn = columns.find(c => c.id === targetColumnId);
+      
+      console.log('Updating lead:', {
+        leadId: activeItem.id,
+        newRating,
+        targetColumn: targetColumn?.name
+      });
+      
+      // Optimistic update - update UI immediately
+      const previousLeads = [...leads];
+      const updatedLeads = leads.map(lead => 
+        lead.id === activeItem.id 
+          ? { ...lead, column: targetColumnId, rating: newRating, modifiedOn: new Date().toISOString() }
+          : lead
+      );
+      setLeads(updatedLeads);
       
       try {
         const token = await getAccessToken();
         if (!token) {
           throw new Error('Unable to get access token');
         }
+        
+        console.log('Sending PATCH request to:', `/api/leads/${activeItem.id}`);
+        console.log('Payload:', { rating: newRating });
         
         const response = await fetch(`/api/leads/${activeItem.id}`, {
           method: 'PATCH',
@@ -195,23 +245,38 @@ export default function LeadsPage() {
           body: JSON.stringify({ rating: newRating }),
         });
 
+        console.log('Response status:', response.status);
+
         if (!response.ok) {
+          const errorText = await response.text();
+          console.error('Response error:', errorText);
           throw new Error('Failed to update lead');
         }
 
-        const updatedLeads = leads.map(lead => 
-          lead.id === activeItem.id 
-            ? { ...lead, column: targetColumnId, rating: newRating, modifiedOn: new Date().toISOString() }
-            : lead
-        );
-        setLeads(updatedLeads);
+        const responseData = await response.json();
+        console.log('Update successful:', responseData);
+
+        // Success notification
+        toast({
+          title: "Lead Updated",
+          description: `${activeItem.name} moved to ${targetColumn?.name || targetColumnId}`,
+        });
         
-        // Dataverse update completed
       } catch (err) {
         console.error('Error updating lead in Dataverse:', err);
-        // Refresh from Dataverse on error
-        fetchLeads();
+        
+        // Rollback on error
+        setLeads(previousLeads);
+        
+        // Error notification
+        toast({
+          title: "Update Failed",
+          description: "Failed to update lead status. Please try again.",
+          variant: "destructive",
+        });
       }
+    } else {
+      console.log('No column change, skipping update');
     }
   };
 
@@ -267,11 +332,21 @@ export default function LeadsPage() {
       setDialogOpen(false);
       setFormData({ ycn_name: '', ycn_rating: '100000000' });
       
+      // Success notification
+      toast({
+        title: "Lead Created",
+        description: `${formData.ycn_name} has been added successfully`,
+      });
+      
       // Refresh from Dataverse to ensure consistency
       setTimeout(fetchLeads, 500);
     } catch (err) {
       console.error('Error creating lead in Dataverse:', err);
-      alert('Failed to create lead in Dataverse. Please check the console for details.');
+      toast({
+        title: "Creation Failed",
+        description: "Failed to create lead. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -304,13 +379,20 @@ export default function LeadsPage() {
               Manage your leads by dragging them between Cold, Warm, and Hot stages
             </p>
           </div>
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="flex items-center gap-2">
-                <Plus className="h-4 w-4" />
-                New Lead
+          <div className="flex gap-2">
+            <Link href="/">
+              <Button variant="outline" className="flex items-center gap-2">
+                <Home className="h-4 w-4" />
+                Home
               </Button>
-            </DialogTrigger>
+            </Link>
+            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+              <DialogTrigger asChild>
+                <Button className="flex items-center gap-2">
+                  <Plus className="h-4 w-4" />
+                  New Lead
+                </Button>
+              </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
               <DialogHeader>
                 <DialogTitle>Add New Lead</DialogTitle>
@@ -360,22 +442,25 @@ export default function LeadsPage() {
                 </Button>
               </DialogFooter>
             </DialogContent>
-          </Dialog>
+            </Dialog>
+          </div>
         </div>
 
         <div className="h-[calc(100vh-180px)]">
           <KanbanProvider
             columns={columns}
-            data={leads}
-            onDataChange={handleDataChange}
+            data={[...leads]}
             onDragEnd={handleDragEnd}
+            onDragStart={handleDragStart}
             className="h-full"
           >
             {(column) => (
               <KanbanBoard 
                 key={column.id} 
                 id={column.id}
-                className="bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700"
+                className={`bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700 transition-all ${
+                  isDragging ? 'border-2 border-dashed border-blue-400 dark:border-blue-600' : ''
+                }`}
               >
                 <KanbanHeader className="px-3 py-2 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
                   <div className="flex items-center justify-between">

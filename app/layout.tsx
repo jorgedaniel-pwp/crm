@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider } from "@/lib/auth/auth-context";
+import { Toaster } from "@/components/ui/toaster";
 
 import "styles/globals.css";
 
@@ -25,6 +26,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <AuthProvider>
           <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
             {children}
+            <Toaster />
           </ThemeProvider>
         </AuthProvider>
       </body>
