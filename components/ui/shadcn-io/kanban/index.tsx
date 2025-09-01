@@ -77,7 +77,7 @@ export const KanbanBoard = ({ id, children, className }: KanbanBoardProps) => {
   return (
     <div
       className={cn(
-        'flex size-full min-h-40 flex-col divide-y overflow-hidden rounded-md border bg-secondary text-xs shadow-sm ring-2 transition-all',
+        'flex flex-col divide-y overflow-hidden rounded-md border bg-secondary text-xs shadow-sm ring-2 transition-all',
         isOver ? 'ring-primary' : 'ring-transparent',
         className
       )}
@@ -162,10 +162,10 @@ export const KanbanCards = <T extends KanbanItemProps = KanbanItemProps>({
   const items = filteredData.map((item) => item.id);
 
   return (
-    <ScrollArea className="overflow-hidden">
+    <ScrollArea className="flex-1 overflow-auto">
       <SortableContext items={items}>
         <div
-          className={cn('flex flex-grow flex-col gap-2 p-2', className)}
+          className={cn('flex flex-col gap-2 p-2 min-h-[150px]', className)}
           {...props}
         >
           {filteredData.map(children)}
@@ -319,11 +319,17 @@ export const KanbanProvider = <
       >
         <div
           className={cn(
-            'grid size-full auto-cols-fr grid-flow-col gap-4',
+            'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-flow-col xl:auto-cols-fr gap-4 min-w-[320px] sm:min-w-0',
             className
           )}
         >
-          {columns.map((column) => children(column))}
+          {/* Mobile: reverse order, Desktop: normal order */}
+          <div className="contents sm:hidden">
+            {[...columns].reverse().map((column) => children(column))}
+          </div>
+          <div className="hidden sm:contents">
+            {columns.map((column) => children(column))}
+          </div>
         </div>
         {typeof window !== 'undefined' &&
           createPortal(

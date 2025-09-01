@@ -371,15 +371,15 @@ export default function LeadsPage() {
   return (
     <AuthGuard>
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="p-6">
-        <div className="mb-8 flex justify-between items-start">
+      <div className="p-4 sm:p-6">
+        <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row justify-between items-start gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Leads Pipeline</h1>
-            <p className="text-gray-600 dark:text-gray-400 mt-2">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Leads Pipeline</h1>
+            <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mt-1 sm:mt-2">
               Manage your leads by dragging them between Cold, Warm, and Hot stages
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 self-start sm:self-auto">
             <Link href="/">
               <Button variant="outline" className="flex items-center gap-2">
                 <Home className="h-4 w-4" />
@@ -393,7 +393,7 @@ export default function LeadsPage() {
                   New Lead
                 </Button>
               </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
+            <DialogContent className="w-[calc(100%-20px)] max-w-[425px] mx-auto">
               <DialogHeader>
                 <DialogTitle>Add New Lead</DialogTitle>
                 <DialogDescription>
@@ -446,34 +446,34 @@ export default function LeadsPage() {
           </div>
         </div>
 
-        <div className="h-[calc(100vh-180px)]">
+        <div className="flex-1 overflow-x-auto pb-4">
           <KanbanProvider
             columns={columns}
             data={[...leads]}
             onDragEnd={handleDragEnd}
             onDragStart={handleDragStart}
-            className="h-full"
+            className="min-w-full md:min-w-0"
           >
             {(column) => (
               <KanbanBoard 
                 key={column.id} 
                 id={column.id}
-                className={`bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700 transition-all ${
+                className={`bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700 transition-all min-h-[200px] ${
                   isDragging ? 'border-2 border-dashed border-blue-400 dark:border-blue-600' : ''
                 }`}
               >
-                <KanbanHeader className="px-3 py-2 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+                <KanbanHeader className="px-2 sm:px-3 py-2 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1 sm:gap-2">
                       <div
-                        className="h-2 w-2 rounded-full"
+                        className="h-2 w-2 rounded-full flex-shrink-0"
                         style={{ backgroundColor: column.color }}
                       />
-                      <span className="font-medium text-sm text-gray-700 dark:text-gray-300">
+                      <span className="font-medium text-xs sm:text-sm text-gray-700 dark:text-gray-300">
                         {column.name}
                       </span>
                     </div>
-                    <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-200 dark:bg-gray-700 px-2 py-0.5 rounded-full">
+                    <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-200 dark:bg-gray-700 px-1.5 sm:px-2 py-0.5 rounded-full">
                       {leads.filter(l => l.column === column.id).length}
                     </span>
                   </div>
@@ -483,11 +483,11 @@ export default function LeadsPage() {
                     <KanbanCard 
                       key={item.id} 
                       {...item}
-                      className="bg-white dark:bg-gray-700 hover:shadow-md transition-shadow border border-gray-200 dark:border-gray-600"
+                      className="bg-white dark:bg-gray-700 hover:shadow-md transition-shadow border border-gray-200 dark:border-gray-600 min-h-[44px]"
                     >
-                      <div className="p-3">
-                        <div className="flex items-start justify-between gap-2 mb-2">
-                          <p className="m-0 font-medium text-sm text-gray-900 dark:text-gray-100">
+                      <div className="p-2 sm:p-3">
+                        <div className="flex items-start justify-between gap-2 mb-1 sm:mb-2">
+                          <p className="m-0 font-medium text-xs sm:text-sm text-gray-900 dark:text-gray-100">
                             {item.name}
                           </p>
                         </div>

@@ -1,6 +1,6 @@
 # 🔄 Version Control & Deployment Instructions
 
-**Current Version: v0.05**
+**Current Version: v0.06**
 
 **IMPORTANT: Before pushing to GitHub, you MUST:**
 1. Increment the version number in this file until such time as we have a visible version in our app
