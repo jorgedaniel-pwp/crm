@@ -27,13 +27,9 @@ import {
   useContext,
   useState,
 } from 'react';
-import { createPortal } from 'react-dom';
-import tunnel from 'tunnel-rat';
 import { Card } from '@/components/ui/card';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
-
-const t = tunnel();
 
 export type { DragEndEvent } from '@dnd-kit/core';
 
@@ -117,32 +113,17 @@ export const KanbanCard = <T extends KanbanItemProps = KanbanItemProps>({
   };
 
   return (
-    <>
-      <div style={style} {...listeners} {...attributes} ref={setNodeRef}>
-        <Card
-          className={cn(
-            'cursor-grab gap-4 rounded-md p-3 shadow-sm',
-            isDragging && 'pointer-events-none cursor-grabbing opacity-30',
-            className
-          )}
-        >
-          {children ?? <p className="m-0 font-medium text-sm">{name}</p>}
-        </Card>
-      </div>
-      {activeCardId === id && (
-        <t.In>
-          <Card
-            className={cn(
-              'cursor-grab gap-4 rounded-md p-3 shadow-sm ring-2 ring-primary',
-              isDragging && 'cursor-grabbing',
-              className
-            )}
-          >
-            {children ?? <p className="m-0 font-medium text-sm">{name}</p>}
-          </Card>
-        </t.In>
-      )}
-    </>
+    <div style={style} {...listeners} {...attributes} ref={setNodeRef}>
+      <Card
+        className={cn(
+          'cursor-grab gap-4 rounded-md p-3 shadow-sm',
+          isDragging && 'pointer-events-none cursor-grabbing opacity-0',
+          className
+        )}
+      >
+        {children ?? <p className="m-0 font-medium text-sm">{name}</p>}
+      </Card>
+    </div>
   );
 };
 
@@ -331,13 +312,17 @@ export const KanbanProvider = <
             {columns.map((column) => children(column))}
           </div>
         </div>
-        {typeof window !== 'undefined' &&
-          createPortal(
-            <DragOverlay>
-              <t.Out />
-            </DragOverlay>,
-            document.body
+        <DragOverlay>
+          {activeCardId && (
+            <Card className="cursor-grabbing gap-4 rounded-md p-3 shadow-lg ring-2 ring-primary">
+              {(() => {
+                const activeItem = data.find(item => item.id === activeCardId);
+                if (!activeItem) return null;
+                return <p className="m-0 font-medium text-sm">{activeItem.name}</p>;
+              })()}
+            </Card>
           )}
+        </DragOverlay>
       </DndContext>
     </KanbanContext.Provider>
   );
